@@ -1,0 +1,17 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Projects</title></head>
+<body>
+<h3>Проекты</h3>
+<button onclick="list()">Обновить</button>
+<button onclick="create()">Создать</button>
+<pre id="out"></pre>
+<script>
+async function list(){
+  out.textContent = JSON.stringify(await (await fetch('/api/projects')).json(), null, 2);
+}
+async function create(){
+  const r = await fetch('/api/projects', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name:'Проект '+Date.now()})});
+  out.textContent = JSON.stringify(await r.json(), null, 2);
+}
+</script>
+</body></html>

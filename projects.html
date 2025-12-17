@@ -1,17 +1,45 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Projects</title></head>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Проекты</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+input,button{padding:6px}
+</style>
+</head>
+<script src="/include.js"></script>
 <body>
-<h3>Проекты</h3>
-<button onclick="list()">Обновить</button>
-<button onclick="create()">Создать</button>
-<pre id="out"></pre>
+<h2>Проекты</h2>
+
+<div class="row">
+  <input id="name" placeholder="Название проекта">
+  <button onclick="create()">Создать</button>
+</div>
+
+<table>
+<thead><tr><th>ID</th><th>Название</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+
 <script>
-async function list(){
-  out.textContent = JSON.stringify(await (await fetch('/api/projects')).json(), null, 2);
+async function load(){
+  const r = await fetch('/api/projects');
+  const data = await r.json();
+  document.getElementById('rows').innerHTML = data.map(p=>`
+    <tr><td>${p.id}</td><td>${p.name||''}</td></tr>
+  `).join('');
 }
 async function create(){
-  const r = await fetch('/api/projects', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({name:'Проект '+Date.now()})});
-  out.textContent = JSON.stringify(await r.json(), null, 2);
+  const name = document.getElementById('name').value || ('Проект '+Date.now());
+  await fetch('/api/projects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})});
+  document.getElementById('name').value='';
+  load();
 }
+load();
 </script>
-</body></html>
+</body>
+</html>

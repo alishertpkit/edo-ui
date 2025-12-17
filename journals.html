@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Журналы</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+input,select,button{padding:6px}
+</style>
+</head>
+<script src="/include.js"></script>
+<body>
+<h2>Журналы регистрации</h2>
+
+<div class="row">
+  <select id="block">
+    <option value="incoming">incoming</option>
+    <option value="outgoing">outgoing</option>
+    <option value="internal">internal</option>
+  </select>
+  <input id="name" placeholder="Название журнала">
+  <button onclick="create()">Создать</button>
+</div>
+
+<table>
+<thead><tr><th>ID</th><th>block</th><th>name</th></tr></thead>
+<tbody id="rows"></tbody>
+</table>
+
+<script>
+async function load(){
+  const r = await fetch('/api/journals');
+  const data = await r.json();
+  document.getElementById('rows').innerHTML = data.map(j=>`
+    <tr><td>${j.id}</td><td>${j.block}</td><td>${j.name}</td></tr>
+  `).join('');
+}
+async function create(){
+  await fetch('/api/journals',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({block:block.value,name:name.value||('Журнал '+Date.now())})
+  });
+  name.value='';
+  load();
+}
+load();
+</script>
+</body>
+</html>

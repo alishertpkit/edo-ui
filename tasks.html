@@ -1,17 +1,66 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Tasks</title></head>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Поручения</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+tr:hover{background:#f5f5f5}
+select{padding:4px}
+.badge{padding:2px 6px;border:1px solid #999;border-radius:4px;font-size:12px}
+</style>
+</head>
+<script src="/include.js"></script>
 <body>
-<h3>Поручения</h3>
-<button onclick="list()">Обновить</button>
-<button onclick="create()">Создать (incoming_id=1, main_executor=1)</button>
-<pre id="out"></pre>
+<h2>Поручения</h2>
+<div style="margin:10px 0">
+<input id="q" placeholder="поиск..." oninput="load()">
+<input id="ex" placeholder="executor" style="width:120px" oninput="load()">
+</div>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Документ</th>
+<th>Исполнитель</th>
+<th>Статус</th>
+<th>Срок</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
 <script>
-async function list(){
-  out.textContent = JSON.stringify(await (await fetch('/api/tasks')).json(), null, 2);
+async function load(){
+  const r = await fetch('/api/tasks');
+  const data = await r.json();
+  document.getElementById('rows').innerHTML = data.map(t=>`
+    <tr>
+      <td>${t.id}</td>
+      <td>${t.incoming_id||t.doc_id||''}</td>
+      <td>${t.main_executor||''}</td>
+      <td>
+        <select onchange="setStatus(${t.id}, this.value)">
+          ${['issued','in_work','done'].map(s=>`
+            <option value="${s}" ${t.status===s?'selected':''}>${s}</option>
+          `).join('')}
+        </select>
+      </td>
+      <td>${t.due_date||''}</td>
+    </tr>
+  `).join('');
 }
-async function create(){
-  const r = await fetch('/api/tasks', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({incoming_id:1, main_executor:1})});
-  out.textContent = JSON.stringify(await r.json(), null, 2);
+async function setStatus(id,status){
+  await fetch('/api/tasks/status',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id,status})
+  });
 }
+load();
 </script>
-</body></html>
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Контроль исполнения</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+.badge{padding:2px 6px;border:1px solid #999;border-radius:4px}
+.overdue{color:#b00;font-weight:bold}
+</style>
+<script src="/include.js"></script>
+</head>
+<body>
+<h2>Контроль исполнения</h2>
+
+<table>
+<thead>
+<tr>
+<th>Исполнитель</th>
+<th>Всего</th>
+<th>В работе</th>
+<th>Выполнено</th>
+<th>Просрочено</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
+<script>
+async function load(){
+  const tasks = await (await fetch('/api/tasks')).json();
+  const map = {};
+  const now = new Date();
+
+  tasks.forEach(t=>{
+    const u = t.main_executor || '—';
+    map[u] ||= {all:0,in_work:0,done:0,overdue:0};
+    map[u].all++;
+    if(t.status==='in_work') map[u].in_work++;
+    if(t.status==='done') map[u].done++;
+    if(t.due_date && new Date(t.due_date)<now && t.status!=='done') map[u].overdue++;
+  });
+
+  document.getElementById('rows').innerHTML = Object.entries(map).map(([u,v])=>`
+    <tr>
+      <td>${u}</td>
+      <td>${v.all}</td>
+      <td>${v.in_work}</td>
+      <td>${v.done}</td>
+      <td class="${v.overdue?'overdue':''}">${v.overdue}</td>
+    </tr>
+  `).join('');
+}
+load();
+</script>
+</body>
+</html>

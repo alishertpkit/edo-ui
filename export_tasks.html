@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Экспорт поручений</title>
+<script src="/include.js"></script>
+</head>
+<body>
+<h2>Экспорт поручений</h2>
+<button onclick="exp()">Скачать CSV</button>
+
+<script>
+async function exp(){
+  const t = await (await fetch('/api/tasks')).json();
+  const rows = [['id','doc','executor','status','due']]
+    .concat(t.map(x=>[x.id,x.incoming_id||x.doc_id||'',x.main_executor||'',x.status||'',x.due_date||'']));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='tasks.csv'; a.click();
+}
+</script>
+</body>
+</html>

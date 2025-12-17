@@ -5,7 +5,8 @@
 <title>Входящий документ</title>
 <link rel="stylesheet" href="/assets/app.css">
 <script src="/assets/app.js"></script>
-</head>
+<script src="/perm.js"></script><script src="/perm.js"></script></head>
+<script src="/include.js"></script>
 <body>
 <header>
   <div class="brand">EDO</div>
@@ -19,7 +20,7 @@
 <main class="grid">
   <section class="card">
     <div class="row" style="justify-content:space-between">
-      <h2>Карточка входящего</h2>
+      <a href="/incoming.html">← Назад</a> <button onclick="window.print()">Печать</button><h2>Карточка входящего</h2>
       <div class="row">
         <input id="docId" placeholder="ID" style="width:120px">
         <button class="primary" onclick="loadDoc()">Загрузить</button>
@@ -36,10 +37,16 @@
     <div class="row">
       <input id="number" placeholder="Номер" style="width:180px">
       <input id="subject" placeholder="Тема" style="flex:1">
+<button onclick="saveSubject()">Сохранить тему</button>
     </div>
 
     <div class="row" style="margin-top:10px">
-      <select id="status">
+      <div style="margin:10px 0">
+<button onclick="quickStatus("registered")">registered</button>
+<button onclick="quickStatus("in_work")">in_work</button>
+<button onclick="quickStatus("closed")">closed</button>
+</div>
+<select id="status">
         <option value="registered">registered</option>
         <option value="in_work">in_work</option>
         <option value="closed">closed</option>
@@ -52,6 +59,9 @@
   </section>
 
   <aside class="card">
+<h3>История</h3>
+<ul id="history"></ul>
+<hr>
     <h3>Поручения по документу</h3>
     <div class="row">
       <input id="exec" placeholder="main_executor" style="width:160px">

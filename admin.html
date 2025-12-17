@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Админка</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+input,button{padding:6px}
+small{color:#666}
+</style>
+</head>
+<script src="/include.js"></script>
+<body>
+<h2>Админка</h2>
+
+<h3>Пользователи</h3>
+<div class="row">
+  <input id="ulogin" placeholder="login">
+  <button onclick="createUser()">Создать</button>
+</div>
+<table>
+<thead><tr><th>ID</th><th>login</th></tr></thead>
+<tbody id="urows"></tbody>
+</table>
+
+<h3>Роли</h3>
+<div class="row">
+  <input id="rcode" placeholder="code">
+  <button onclick="createRole()">Создать</button>
+</div>
+<table>
+<thead><tr><th>ID</th><th>code</th></tr></thead>
+<tbody id="rrows"></tbody>
+</table>
+
+<h3>Права</h3>
+<div class="row">
+  <input id="pkey" placeholder="permission.key">
+  <button onclick="createPerm()">Создать</button>
+</div>
+<table>
+<thead><tr><th>ID</th><th>key</th></tr></thead>
+<tbody id="prows"></tbody>
+</table>
+
+<h3>Назначения</h3>
+<small>Связи user↔role и role↔permission</small>
+<div class="row">
+  <input id="uid" placeholder="user_id" style="width:110px">
+  <input id="rid" placeholder="role_id" style="width:110px">
+  <button onclick="bindUserRole()">user→role</button>
+</div>
+<div class="row">
+  <input id="rid2" placeholder="role_id" style="width:110px">
+  <input id="pid" placeholder="permission_id" style="width:130px">
+  <button onclick="bindRolePerm()">role→perm</button>
+</div>
+<pre id="msg"></pre>
+
+<script>
+async function j(u,o){const r=await fetch(u,o||{});return r.json()}
+async function load(){
+  document.getElementById('urows').innerHTML=(await j('/api/users')).map(x=>`<tr><td>${x.id}</td><td>${x.login}</td></tr>`).join('')
+  document.getElementById('rrows').innerHTML=(await j('/api/roles')).map(x=>`<tr><td>${x.id}</td><td>${x.code}</td></tr>`).join('')
+  document.getElementById('prows').innerHTML=(await j('/api/permissions')).map(x=>`<tr><td>${x.id}</td><td>${x.key}</td></tr>`).join('')
+}
+async function createUser(){
+  await fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:ulogin.value})}); ulogin.value=''; load()
+}
+async function createRole(){
+  await fetch('/api/roles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:rcode.value})}); rcode.value=''; load()
+}
+async function createPerm(){
+  await fetch('/api/permissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:pkey.value})}); pkey.value=''; load()
+}
+async function bindUserRole(){
+  const r=await fetch('/api/user_roles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:+uid.value,role_id:+rid.value})})
+  msg.textContent=await r.text(); load()
+}
+async function bindRolePerm(){
+  const r=await fetch('/api/role_permissions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role_id:+rid2.value,permission_id:+pid.value})})
+  msg.textContent=await r.text(); load()
+}
+load();
+</script>
+</body>
+</html>

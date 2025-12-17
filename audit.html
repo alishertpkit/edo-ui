@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Аудит</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+small{color:#666}
+</style>
+<script src="/include.js"></script>
+</head>
+<body>
+<h2>Журнал аудита</h2>
+<small>Последние действия в системе</small>
+
+<table>
+<thead>
+<tr><th>Время</th><th>Пользователь</th><th>Действие</th><th>Объект</th></tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
+<script>
+async function load(){
+  const r = await fetch('/api/audit');
+  const data = await r.json();
+  document.getElementById('rows').innerHTML = (data||[]).map(a=>`
+    <tr>
+      <td>${a.ts||''}</td>
+      <td>${a.user_id||''}</td>
+      <td>${a.action||''}</td>
+      <td>${a.entity||''}</td>
+    </tr>
+  `).join('');
+}
+load();
+</script>
+</body>
+</html>

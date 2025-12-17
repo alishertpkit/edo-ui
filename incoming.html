@@ -1,17 +1,67 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Incoming</title></head>
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Входящие</title>
+<style>
+body{font-family:Arial;margin:20px}
+table{border-collapse:collapse;width:100%}
+th,td{border:1px solid #ccc;padding:6px;text-align:left}
+tr:hover{background:#f5f5f5;cursor:pointer}
+.badge{padding:2px 6px;border:1px solid #999;border-radius:4px;font-size:12px}
+</style>
+<script src="/perm.js"></script><script src="/perm.js"></script></head>
+<script src="/include.js"></script>
 <body>
-<h3>Входящие</h3>
-<button onclick="list()">Обновить</button>
-<button onclick="create()">Создать</button>
-<pre id="out"></pre>
+<h2>Входящие документы</h2>
+<div id="counters" style="margin:8px 0;font-size:14px"></div>
+<div id="counters" style="margin:8px 0;font-size:14px"></div>
+<div style="margin:10px 0">
+<input id="q" placeholder="поиск..." oninput="load()">
+<select id="fs" onchange="load()">
+<option value="">все</option>
+<option value="registered">registered</option>
+<option value="in_work">in_work</option>
+<option value="closed">closed</option>
+</select>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Номер</th>
+<th>Тема</th>
+<th>Статус</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
 <script>
-async function list(){
-  out.textContent = JSON.stringify(await (await fetch('/api/incoming')).json(), null, 2);
+async function load(){
+  const r = await fetch('/api/incoming');
+  const all = await r.json();
+const q=document.getElementById("q")?.value?.toLowerCase()||"";
+const fs=document.getElementById("fs")?.value||"";
+const cnt = all.reduce((a,x)=>{a[x.status]=(a[x.status]||0)+1;return a},{})
+document.getElementById("counters").innerHTML = `registered:  | in_work:  | closed: `;
+const cnt = all.reduce((a,x)=>{a[x.status]=(a[x.status]||0)+1;return a},{})
+document.getElementById("counters").innerHTML = `registered:  | in_work:  | closed: `;
+const data = all.filter(d=>(!q || (d.number||"").toLowerCase().includes(q) || (d.subject||"").toLowerCase().includes(q)) && (!fs || d.status===fs));
+  document.getElementById('rows').innerHTML = data.map(d=>`
+    <tr onclick="openDoc(${d.id})">
+      <td>${d.id}</td>
+      <td>${d.number||''}</td>
+      <td>${d.subject||''}</td>
+      <td><span class="badge">${d.status||''}</span></td>
+    </tr>
+  `).join('');
 }
-async function create(){
-  const r = await fetch('/api/incoming', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({number:'ВХ-'+Date.now(), subject:'Тест'})});
-  out.textContent = JSON.stringify(await r.json(), null, 2);
+function openDoc(id){
+  location.href = '/incoming_view.html?id=' + id;
 }
+load();
 </script>
-</body></html>
+</body>
+</html>

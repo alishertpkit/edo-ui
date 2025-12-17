@@ -12,24 +12,107 @@
   <nav>
     <a href="/index.html">Главная</a>
     <a href="/incoming.html">Входящие</a>
+    <a href="/tasks.html">Поручения</a>
   </nav>
 </header>
 
-<main class="card">
-  <h2>Карточка входящего</h2>
-  <div class="row">
-    <input id="docId" placeholder="ID документа" style="width:160px">
-    <button class="primary" onclick="loadDoc()">Загрузить</button>
-  </div>
-  <pre id="out"></pre>
+<main class="grid">
+  <section class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2>Карточка входящего</h2>
+      <div class="row">
+        <input id="docId" placeholder="ID" style="width:120px">
+        <button class="primary" onclick="loadDoc()">Загрузить</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="badge" id="stBadge"></div>
+      <div class="muted small" id="meta"></div>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <input id="number" placeholder="Номер" style="width:180px">
+      <input id="subject" placeholder="Тема" style="flex:1">
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <select id="status">
+        <option value="registered">registered</option>
+        <option value="in_work">in_work</option>
+        <option value="closed">closed</option>
+      </select>
+      <button onclick="setStatus()">Сохранить статус</button>
+      <span class="muted small" id="msg"></span>
+    </div>
+
+    <pre id="raw" style="margin-top:12px"></pre>
+  </section>
+
+  <aside class="card">
+    <h3>Поручения по документу</h3>
+    <div class="row">
+      <input id="exec" placeholder="main_executor" style="width:160px">
+      <input id="due" placeholder="due YYYY-MM-DD" style="width:170px">
+      <button class="primary" onclick="createTask()">+ поручение</button>
+    </div>
+    <hr>
+    <table>
+      <thead><tr><th>ID</th><th>executor</th><th>status</th><th>due</th></tr></thead>
+      <tbody id="trows"></tbody>
+    </table>
+    <pre id="tout"></pre>
+  </aside>
 </main>
 
 <script>
+let current=null;
+
 async function loadDoc(){
-  const id = document.getElementById('docId').value;
+  document.getElementById('msg').textContent='';
+  const id = Number(document.getElementById('docId').value);
   const list = await api('/api/incoming');
-  const doc = list.find(x => x.id == id);
-  document.getElementById('out').textContent = JSON.stringify(doc, null, 2);
+  current = list.find(x => x.id === id);
+  if(!current){ document.getElementById('raw').textContent='Не найдено'; return; }
+
+  document.getElementById('number').value = current.number || '';
+  document.getElementById('subject').value = current.subject || '';
+  document.getElementById('status').value = current.status || 'registered';
+  document.getElementById('stBadge').textContent = current.status || '';
+  document.getElementById('meta').textContent = 'created_at: ' + (current.created_at || '');
+  document.getElementById('raw').textContent = JSON.stringify(current,null,2);
+
+  await loadTasks();
+}
+
+async function setStatus(){
+  if(!current) return;
+  const id = current.id;
+  const status = document.getElementById('status').value;
+  const r = await api('/api/incoming/status',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});
+  document.getElementById('msg').textContent = 'OK';
+  document.getElementById('raw').textContent = JSON.stringify(r,null,2);
+  await loadDoc();
+}
+
+async function loadTasks(){
+  const t = await api('/api/tasks');
+  const rel = t.filter(x => x.incoming_id === current.id);
+  document.getElementById('trows').innerHTML = rel.map(x=>`
+    <tr><td>${x.id}</td><td>${x.main_executor}</td><td><span class="badge">${x.status||''}</span></td><td>${x.due_date||''}</td></tr>
+  `).join('');
+}
+
+async function createTask(){
+  if(!current) return;
+  const incoming_id = current.id;
+  const main_executor = Number(document.getElementById('exec').value||1);
+  const due_date = document.getElementById('due').value||null;
+  const r = await api('/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({incoming_id,main_executor,due_date})});
+  document.getElementById('tout').textContent = JSON.stringify(r,null,2);
+  await loadTasks();
 }
 </script>
 </body>
